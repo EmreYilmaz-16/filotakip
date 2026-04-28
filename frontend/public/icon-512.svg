@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="90" fill="#1e40af"/>
+  <rect x="64" y="210" width="294" height="162" rx="20" fill="#fff"/>
+  <rect x="358" y="256" width="90" height="116" rx="16" fill="#fff"/>
+  <polygon points="358,256 448,256 414,192 358,192" fill="#93c5fd"/>
+  <circle cx="146" cy="394" r="42" fill="#1e3a8a"/>
+  <circle cx="146" cy="394" r="22" fill="#93c5fd"/>
+  <circle cx="386" cy="394" r="42" fill="#1e3a8a"/>
+  <circle cx="386" cy="394" r="22" fill="#93c5fd"/>
+  <rect x="64" y="286" width="294" height="10" fill="#bfdbfe" opacity="0.4"/>
+</svg>
