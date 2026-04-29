@@ -6,6 +6,53 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 
 const routes = require('./routes');
+const db = require('./db');
+
+// Migrations - yeni tablolar için
+async function runMigrations() {
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS accidents (
+        id SERIAL PRIMARY KEY,
+        vehicle_id INTEGER NOT NULL REFERENCES vehicles(id) ON DELETE CASCADE,
+        driver_id INTEGER REFERENCES drivers(id) ON DELETE SET NULL,
+        reported_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        accident_date DATE NOT NULL,
+        accident_time TIME,
+        location TEXT,
+        accident_type VARCHAR(30) DEFAULT 'other' CHECK (accident_type IN ('rear_end','side_impact','head_on','rollover','parking','animal','other')),
+        fault VARCHAR(20) DEFAULT 'unknown' CHECK (fault IN ('our_fault','third_party_fault','shared','unknown')),
+        description TEXT,
+        police_report_no VARCHAR(50),
+        weather_condition VARCHAR(20) CHECK (weather_condition IN ('clear','rainy','foggy','snowy','icy')),
+        road_condition VARCHAR(20) CHECK (road_condition IN ('dry','wet','icy','under_construction')),
+        third_party_name VARCHAR(100),
+        third_party_plate VARCHAR(20),
+        third_party_insurance VARCHAR(100),
+        third_party_phone VARCHAR(20),
+        witness_info TEXT,
+        damage_description TEXT,
+        damage_areas TEXT[],
+        estimated_cost NUMERIC(12,2),
+        repair_cost NUMERIC(12,2),
+        repair_date DATE,
+        repair_shop VARCHAR(100),
+        insurance_claim_no VARCHAR(50),
+        insurance_company VARCHAR(100),
+        claim_status VARCHAR(20) DEFAULT 'not_filed' CHECK (claim_status IN ('not_filed','pending','approved','rejected','settled')),
+        claim_amount NUMERIC(12,2),
+        status VARCHAR(20) DEFAULT 'open' CHECK (status IN ('open','in_repair','closed')),
+        notes TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    console.log('Migrations tamamlandi.');
+  } catch (err) {
+    console.error('Migration hatasi:', err.message);
+  }
+}
+runMigrations();
 
 const app = express();
 const PORT = process.env.PORT || 5000;

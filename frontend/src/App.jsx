@@ -16,6 +16,8 @@ import UsersPage from './pages/UsersPage'
 import TripsPage from './pages/TripsPage'
 import DriverDocsPage from './pages/DriverDocsPage'
 import TaxesPage from './pages/TaxesPage'
+import AccidentsPage from './pages/AccidentsPage'
+import AccidentDetailPage from './pages/AccidentDetailPage'
 
 const PrivateRoute = ({ children }) => {
   const token = useAuthStore((s) => s.token)
@@ -50,6 +52,8 @@ export default function App() {
           <Route path="trips" element={<TripsPage />} />
           <Route path="driver-docs" element={<DriverDocsPage />} />
           <Route path="taxes" element={<TaxesPage />} />
+          <Route path="accidents" element={<AccidentsPage />} />
+          <Route path="accidents/:id" element={<AccidentDetailPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

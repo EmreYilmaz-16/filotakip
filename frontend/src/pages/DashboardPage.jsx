@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Truck, AlertTriangle, Wrench, Fuel, FileText, ClipboardList, TrendingUp, Receipt, Shield } from 'lucide-react'
-import { getDashboard, getMaintenanceSchedules, getExpiringDocuments } from '../services/api'
+import { Truck, AlertTriangle, Wrench, Fuel, FileText, ClipboardList, TrendingUp, Receipt, Shield, ShieldAlert } from 'lucide-react'
+import { getDashboard, getMaintenanceSchedules, getExpiringDocuments, getAccidentStats } from '../services/api'
 import { PageLoader, StatCard } from '../components/ui/Common'
 import { StatusBadge, SeverityBadge } from '../components/ui/Badges'
 import { format } from 'date-fns'
@@ -21,6 +21,10 @@ export default function DashboardPage() {
   const { data: expiringDocs } = useQuery({
     queryKey: ['expiring-docs'],
     queryFn: () => getExpiringDocuments({ days: 30 }),
+  })
+  const { data: accidentStats } = useQuery({
+    queryKey: ['accident-stats'],
+    queryFn: getAccidentStats,
   })
 
   if (isLoading) return <PageLoader />
@@ -104,6 +108,13 @@ export default function DashboardPage() {
           subtitle="Bu yıl ödenmemiş"
           icon={Receipt}
           color={dash?.pending_taxes > 0 ? 'amber' : 'slate'}
+        />
+        <StatCard
+          title="Kaza Kaydı (Bu Ay)"
+          value={accidentStats?.this_month || 0}
+          subtitle={accidentStats?.open > 0 ? `${accidentStats.open} açık dosya` : 'Açık dosya yok'}
+          icon={ShieldAlert}
+          color={accidentStats?.this_month > 0 ? 'red' : 'slate'}
         />
       </div>
 

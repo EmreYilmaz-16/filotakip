@@ -118,4 +118,12 @@ export const updateVehicleTax = (id, data) => api.put(`/vehicle-taxes/${id}`, da
 export const payVehicleTax = (id, data) => api.patch(`/vehicle-taxes/${id}/pay`, data || {}).then(r => r.data)
 export const deleteVehicleTax = (id) => api.delete(`/vehicle-taxes/${id}`).then(r => r.data)
 
+// Kaza / Hasar Kayıtları
+export const getAccidents = (params) => api.get('/accidents', { params }).then(r => r.data)
+export const getAccidentStats = () => api.get('/accidents/stats').then(r => r.data)
+export const getAccident = (id) => api.get(`/accidents/${id}`).then(r => r.data)
+export const createAccident = (data) => api.post('/accidents', data).then(r => r.data)
+export const updateAccident = (id, data) => api.put(`/accidents/${id}`, data).then(r => r.data)
+export const deleteAccident = (id) => api.delete(`/accidents/${id}`).then(r => r.data)
+
 export default api

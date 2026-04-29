@@ -15,6 +15,7 @@ const userRoutes = require('./users');
 const tripRoutes = require('./trips');
 const driverDocRoutes = require('./driver-documents');
 const vehicleTaxRoutes = require('./vehicle-taxes');
+const accidentRoutes = require('./accidents');
 
 router.use('/auth', authRoutes);
 router.use('/vehicles', vehicleRoutes);
@@ -30,5 +31,6 @@ router.use('/users', userRoutes);
 router.use('/trips', tripRoutes);
 router.use('/driver-documents', driverDocRoutes);
 router.use('/vehicle-taxes', vehicleTaxRoutes);
+router.use('/accidents', accidentRoutes);
 
 module.exports = router;
