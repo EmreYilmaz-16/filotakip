@@ -378,12 +378,12 @@ export default function VehicleDetailPage() {
                   <label className="label">Belge Türü *</label>
                   <select {...regDoc('document_type', { required: true })} className="input">
                     <option value="">Seçin</option>
-                    <option value="sigorta">Sigorta (Kasko)</option>
-                    <option value="trafik_sigortasi">Trafik Sigortası</option>
-                    <option value="muayene">Muayene</option>
-                    <option value="ruhsat">Ruhsat</option>
-                    <option value="izin">İzin Belgesi</option>
-                    <option value="diger">Diğer</option>
+                    <option value="insurance">Sigorta / Kasko</option>
+                    <option value="inspection">Muayene</option>
+                    <option value="registration">Ruhsat</option>
+                    <option value="license">İzin Belgesi</option>
+                    <option value="emission">Emisyon</option>
+                    <option value="other">Diğer</option>
                   </select>
                 </div>
                 <div>
