@@ -37,6 +37,14 @@ export default function FuelPage() {
   const unitPrice = watch('unit_price')
   const selectedVehicleId = watch('vehicle_id')
 
+  useEffect(() => {
+    const l = parseFloat(liters)
+    const u = parseFloat(unitPrice)
+    if (!isNaN(l) && !isNaN(u) && l > 0 && u > 0) {
+      setValue('total_cost', parseFloat((l * u).toFixed(2)))
+    }
+  }, [liters, unitPrice])
+
   // Araç seçilince zimmetli sürücüyü otomatik doldur
   useEffect(() => {
     if (!selectedVehicleId || !activeAssignments) return
@@ -173,29 +181,32 @@ export default function FuelPage() {
               <label className="label">Litre *</label>
               <input
                 {...register('liters', { required: true, valueAsNumber: true })}
-                type="number" step="0.01" className="input"
-                onChange={(e) => {
-                  const val = parseFloat(e.target.value)
-                  const up = parseFloat(unitPrice)
-                  if (!isNaN(val) && !isNaN(up)) setValue('total_cost', (val * up).toFixed(2))
-                }}
+                type="number" step="0.01" className="input" placeholder="0.00"
               />
             </div>
             <div>
               <label className="label">Birim Fiyat (₺/L) *</label>
               <input
                 {...register('unit_price', { required: true, valueAsNumber: true })}
-                type="number" step="0.001" className="input"
-                onChange={(e) => {
-                  const val = parseFloat(liters)
-                  const up = parseFloat(e.target.value)
-                  if (!isNaN(val) && !isNaN(up)) setValue('total_cost', (val * up).toFixed(2))
-                }}
+                type="number" step="0.001" className="input" placeholder="0.000"
               />
             </div>
-            <div>
-              <label className="label">Toplam Tutar (₺) *</label>
-              <input {...register('total_cost', { required: true, valueAsNumber: true })} type="number" step="0.01" className="input" />
+            <div className="col-span-2">
+              <label className="label">Toplam Tutar (₺)</label>
+              <div className="relative">
+                <input
+                  {...register('total_cost', { required: true, valueAsNumber: true })}
+                  type="number" step="0.01"
+                  className="input bg-blue-50 font-semibold text-blue-800 cursor-default"
+                  readOnly
+                  placeholder="Litre × Birim Fiyat otomatik hesaplanır"
+                />
+                {liters > 0 && unitPrice > 0 && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-blue-500">
+                    {parseFloat(liters).toFixed(2)} L × ₺{parseFloat(unitPrice).toFixed(3)}
+                  </span>
+                )}
+              </div>
             </div>
             <div>
               <label className="label">İstasyon</label>
