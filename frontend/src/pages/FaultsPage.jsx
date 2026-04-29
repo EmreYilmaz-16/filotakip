@@ -43,8 +43,8 @@ export default function FaultsPage() {
   useEffect(() => {
     if (!selectedVehicleId || !activeAssignments) return
     const assignment = activeAssignments.find(a => a.vehicle_id === parseInt(selectedVehicleId))
-    if (assignment) setValue('reported_by_driver_id', assignment.driver_id)
-    else setValue('reported_by_driver_id', '')
+    if (assignment) setValue('driver_id', assignment.driver_id)
+    else setValue('driver_id', '')
   }, [selectedVehicleId, activeAssignments])
 
   const createMutation = useMutation({
@@ -58,7 +58,7 @@ export default function FaultsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-800">Arıza Takibi</h1>
-          <p className="text-sm text-slate-500">{faults?.length || 0} arıza kaydı</p>
+          <p className="text-sm text-slate-500">{faults?.total || 0} arıza kaydı</p>
         </div>
         <button className="btn-primary" onClick={() => setModalOpen(true)}>
           <Plus size={16} /> Arıza Bildir
@@ -103,14 +103,14 @@ export default function FaultsPage() {
               </tr>
             </thead>
             <tbody>
-              {!faults?.length ? (
+              {!faults?.data?.length ? (
                 <tr><td colSpan={8}><EmptyState icon={AlertTriangle} title="Arıza kaydı bulunamadı" /></td></tr>
-              ) : faults.map(f => (
+              ) : faults.data.map(f => (
                 <tr key={f.id}>
                   <td>{format(new Date(f.reported_date), 'dd.MM.yyyy')}</td>
                   <td className="font-medium">{f.plate_no} <span className="text-slate-400 font-normal">{f.brand}</span></td>
                   <td className="max-w-xs truncate">{f.title}</td>
-                  <td className="capitalize">{f.category || '—'}</td>
+                  <td className="capitalize">{f.fault_type || '—'}</td>
                   <td><SeverityBadge severity={f.severity} /></td>
                   <td>{f.reported_by_name || '—'}</td>
                   <td><StatusBadge status={f.status} /></td>
@@ -137,7 +137,7 @@ export default function FaultsPage() {
             </div>
             <div>
               <label className="label">Bildiren Sürücü</label>
-              <select {...register('reported_by_driver_id', { valueAsNumber: true })} className="input">
+              <select {...register('driver_id', { valueAsNumber: true })} className="input">
                 <option value="">Seçin</option>
                 {drivers?.map(d => <option key={d.id} value={d.id}>{d.first_name} {d.last_name}</option>)}
               </select>
@@ -148,17 +148,14 @@ export default function FaultsPage() {
             </div>
             <div>
               <label className="label">Kategori</label>
-              <select {...register('category')} className="input">
+              <select {...register('fault_type')} className="input">
                 <option value="">Seçin</option>
-                <option value="engine">Motor</option>
-                <option value="transmission">Şanzıman</option>
-                <option value="electrical">Elektrik</option>
-                <option value="brakes">Frenler</option>
-                <option value="suspension">Süspansiyon</option>
-                <option value="tires">Lastikler</option>
-                <option value="bodywork">Kaporta</option>
-                <option value="ac">Klima</option>
-                <option value="other">Diğer</option>
+                <option value="mekanik">Mekanik</option>
+                <option value="elektrik">Elektrik</option>
+                <option value="kaporta">Kaporta</option>
+                <option value="lastik">Lastik</option>
+                <option value="cam">Cam</option>
+                <option value="diger">Diğer</option>
               </select>
             </div>
             <div>

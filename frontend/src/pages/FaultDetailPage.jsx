@@ -90,7 +90,7 @@ export default function FaultDetailPage() {
         </div>
         <p className="mt-3 text-slate-700 whitespace-pre-wrap">{fault.description}</p>
         <div className="flex flex-wrap gap-4 mt-4 text-sm text-slate-500">
-          {fault.category && <span>Kategori: <strong>{fault.category}</strong></span>}
+          {fault.fault_type && <span>Kategori: <strong>{fault.fault_type}</strong></span>}
           {fault.km_at_fault && <span>KM: <strong>{parseInt(fault.km_at_fault).toLocaleString()}</strong></span>}
           {fault.resolved_date && <span>Çözüm: <strong>{format(new Date(fault.resolved_date), 'dd.MM.yyyy')}</strong></span>}
           {fault.repair_cost && <span>Tamir Maliyeti: <strong>₺{parseFloat(fault.repair_cost).toFixed(2)}</strong></span>}
