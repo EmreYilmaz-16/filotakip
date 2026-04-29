@@ -141,7 +141,9 @@ export default function VehicleDetailPage() {
   const [activeTab, setActiveTab] = useState('Genel')
   const [fuelModal, setFuelModal] = useState(false)
   const [maintenanceModal, setMaintenanceModal] = useState(false)
+  const [docModal, setDocModal] = useState(false)
   const qc = useQueryClient()
+  const { register: regDoc, handleSubmit: handleDoc, reset: resetDoc } = useForm()
 
   const { data: vehicle, isLoading } = useQuery({ queryKey: ['vehicle', id], queryFn: () => getVehicle(id) })
   const { data: fuelRecords } = useQuery({ queryKey: ['fuel', id], queryFn: () => getFuelRecords({ vehicle_id: id }) })
@@ -327,7 +329,13 @@ export default function VehicleDetailPage() {
 
       {/* Belgeler */}
       {activeTab === 'Belgeler' && (
-        <div className="table-container">
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            <button className="btn-primary" onClick={() => setDocModal(true)}>
+              <Plus size={16} /> Belge Ekle
+            </button>
+          </div>
+          <div className="table-container">
           <table className="table">
             <thead><tr><th>Belge Adı</th><th>Tür</th><th>Düzenleme</th><th>Bitiş</th><th>Sigorta Şirketi</th></tr></thead>
             <tbody>
@@ -353,8 +361,59 @@ export default function VehicleDetailPage() {
                 )
               })}
             </tbody>
-          </table>
-        </div>
+          </table>          </div>
+          <Modal isOpen={docModal} onClose={() => { setDocModal(false); resetDoc() }} title="Araç Belgesi Ekle" size="lg">
+            <form onSubmit={handleDoc((data) => {
+              const n = (v) => (v === '' || v === undefined) ? null : v
+              createDocument({ ...data, vehicle_id: parseInt(id), issue_date: n(data.issue_date), expiry_date: n(data.expiry_date), insurance_company: n(data.insurance_company), policy_no: n(data.policy_no), amount: n(data.amount) })
+                .then(() => { toast.success('Belge eklendi.'); setDocModal(false); resetDoc(); qc.invalidateQueries({ queryKey: ['documents', id] }) })
+                .catch((err) => toast.error(err.response?.data?.error || 'Hata oluştu.'))
+            })} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label">Belge Adı *</label>
+                  <input {...regDoc('document_name', { required: true })} className="input" placeholder="Sigorta Poliçesi vb." />
+                </div>
+                <div>
+                  <label className="label">Belge Türü *</label>
+                  <select {...regDoc('document_type', { required: true })} className="input">
+                    <option value="">Seçin</option>
+                    <option value="sigorta">Sigorta (Kasko)</option>
+                    <option value="trafik_sigortasi">Trafik Sigortası</option>
+                    <option value="muayene">Muayene</option>
+                    <option value="ruhsat">Ruhsat</option>
+                    <option value="izin">İzin Belgesi</option>
+                    <option value="diger">Diğer</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Düzenleme Tarihi</label>
+                  <input {...regDoc('issue_date')} type="date" className="input" />
+                </div>
+                <div>
+                  <label className="label">Bitiş Tarihi</label>
+                  <input {...regDoc('expiry_date')} type="date" className="input" />
+                </div>
+                <div>
+                  <label className="label">Sigorta Şirketi</label>
+                  <input {...regDoc('insurance_company')} className="input" />
+                </div>
+                <div>
+                  <label className="label">Poliçe / Belge No</label>
+                  <input {...regDoc('policy_no')} className="input" />
+                </div>
+                <div>
+                  <label className="label">Tutar (₺)</label>
+                  <input {...regDoc('amount', { valueAsNumber: true })} type="number" step="0.01" className="input" />
+                </div>
+                <div>
+                  <label className="label">Notlar</label>
+                  <input {...regDoc('notes')} className="input" />
+                </div>
+              </div>
+              <button type="submit" className="btn-primary w-full justify-center">Kaydet</button>
+            </form>
+          </Modal>        </div>
       )}
 
       {/* Zimmet */}
