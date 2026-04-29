@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Wrench, CheckCircle } from 'lucide-react'
+import { Plus, Wrench, CheckCircle, Pencil, Trash2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 import {
-  getMaintenanceSchedules, createMaintenanceSchedule,
+  getMaintenanceSchedules, createMaintenanceSchedule, updateMaintenanceSchedule, deleteMaintenanceSchedule,
   getMaintenanceRecords, createMaintenanceRecord,
   getMaintenanceTypes, getVehicles
 } from '../services/api'
@@ -22,6 +22,8 @@ export default function MaintenancePage() {
   const [tab, setTab] = useState('Periyodik Planlar')
   const [scheduleModal, setScheduleModal] = useState(false)
   const [recordModal, setRecordModal] = useState(false)
+  const [editModal, setEditModal] = useState(false)
+  const [editSchedule, setEditSchedule] = useState(null)
   const [vehicleFilter, setVehicleFilter] = useState('')
   const [overdueOnly, setOverdueOnly] = useState(false)
 
@@ -37,7 +39,8 @@ export default function MaintenancePage() {
   const { data: types } = useQuery({ queryKey: ['maintenance-types'], queryFn: getMaintenanceTypes })
   const { data: vehicles } = useQuery({ queryKey: ['vehicles'], queryFn: () => getVehicles() })
 
-  const { register: regS, handleSubmit: handleS, reset: resetS } = useForm()
+  const { register: regS, handleSubmit: handleS, reset: resetS, watch: watchS, setValue: setValueS } = useForm()
+  const { register: regE, handleSubmit: handleE, reset: resetE, watch: watchE, setValue: setValueE } = useForm()
   const { register: regR, handleSubmit: handleR, reset: resetR } = useForm({
     defaultValues: { date: format(new Date(), 'yyyy-MM-dd') }
   })
@@ -47,11 +50,76 @@ export default function MaintenancePage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['maintenance-schedules'] }); setScheduleModal(false); resetS(); toast.success('Plan oluşturuldu.') },
     onError: (err) => toast.error(err.response?.data?.error || 'Hata oluştu.'),
   })
+  const updateScheduleMutation = useMutation({
+    mutationFn: ({ id, data }) => updateMaintenanceSchedule(id, data),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['maintenance-schedules'] }); setEditModal(false); resetE(); toast.success('Plan güncellendi.') },
+    onError: (err) => toast.error(err.response?.data?.error || 'Hata oluştu.'),
+  })
+  const deleteScheduleMutation = useMutation({
+    mutationFn: deleteMaintenanceSchedule,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['maintenance-schedules'] }); toast.success('Plan silindi.') },
+    onError: (err) => toast.error(err.response?.data?.error || 'Hata oluştu.'),
+  })
   const recordMutation = useMutation({
     mutationFn: createMaintenanceRecord,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['maintenance-records-all'] }); qc.invalidateQueries({ queryKey: ['maintenance-schedules'] }); setRecordModal(false); resetR(); toast.success('Bakım kaydı eklendi.') },
     onError: (err) => toast.error(err.response?.data?.error || 'Hata oluştu.'),
   })
+
+  // Auto-calc: Ekle formu
+  const sIntervalKm = watchS('interval_km')
+  const sLastDoneKm = watchS('last_done_km')
+  const sIntervalDays = watchS('interval_days')
+  const sLastDoneDate = watchS('last_done_date')
+  useEffect(() => {
+    if (sIntervalKm && sLastDoneKm) setValueS('next_due_km', parseInt(sLastDoneKm) + parseInt(sIntervalKm))
+  }, [sIntervalKm, sLastDoneKm])
+  useEffect(() => {
+    if (sIntervalDays && sLastDoneDate) {
+      const d = new Date(sLastDoneDate)
+      d.setDate(d.getDate() + parseInt(sIntervalDays))
+      setValueS('next_due_date', d.toISOString().split('T')[0])
+    }
+  }, [sIntervalDays, sLastDoneDate])
+
+  // Auto-calc: Düzenle formu
+  const eIntervalKm = watchE('interval_km')
+  const eLastDoneKm = watchE('last_done_km')
+  const eIntervalDays = watchE('interval_days')
+  const eLastDoneDate = watchE('last_done_date')
+  useEffect(() => {
+    if (eIntervalKm && eLastDoneKm) setValueE('next_due_km', parseInt(eLastDoneKm) + parseInt(eIntervalKm))
+  }, [eIntervalKm, eLastDoneKm])
+  useEffect(() => {
+    if (eIntervalDays && eLastDoneDate) {
+      const d = new Date(eLastDoneDate)
+      d.setDate(d.getDate() + parseInt(eIntervalDays))
+      setValueE('next_due_date', d.toISOString().split('T')[0])
+    }
+  }, [eIntervalDays, eLastDoneDate])
+
+  const handleEditSchedule = (s) => {
+    setEditSchedule(s)
+    resetE({
+      vehicle_id: s.vehicle_id,
+      maintenance_type_id: s.maintenance_type_id || '',
+      custom_name: s.custom_name || '',
+      interval_km: s.interval_km || '',
+      interval_days: s.interval_days || '',
+      last_done_km: s.last_done_km || '',
+      last_done_date: s.last_done_date ? s.last_done_date.split('T')[0] : '',
+      next_due_km: s.next_due_km || '',
+      next_due_date: s.next_due_date ? s.next_due_date.split('T')[0] : '',
+      notes: s.notes || '',
+    })
+    setEditModal(true)
+  }
+
+  const handleDeleteSchedule = (id) => {
+    if (window.confirm('Bu bakım planını silmek istediğinizden emin misiniz?')) {
+      deleteScheduleMutation.mutate(id)
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -103,7 +171,7 @@ export default function MaintenancePage() {
           <div className="table-container">
             <table className="table">
               <thead>
-                <tr><th>Araç</th><th>Bakım Tipi</th><th>Son Yapıldı</th><th>Sonraki KM</th><th>Sonraki Tarih</th><th>Durum</th></tr>
+                <tr><th>Araç</th><th>Bakım Tipi</th><th>Son Yapıldı</th><th>Sonraki KM</th><th>Sonraki Tarih</th><th>Durum</th>{canEdit && <th></th>}</tr>
               </thead>
               <tbody>
                 {!schedules?.length ? (
@@ -126,6 +194,14 @@ export default function MaintenancePage() {
                           : <span className="badge bg-green-100 text-green-700">Normal</span>
                       }
                     </td>
+                    {canEdit && (
+                      <td>
+                        <div className="flex gap-1">
+                          <button onClick={() => handleEditSchedule(s)} className="p-1 text-blue-600 hover:text-blue-800 rounded" title="Düzenle"><Pencil size={15} /></button>
+                          <button onClick={() => handleDeleteSchedule(s.id)} className="p-1 text-red-500 hover:text-red-700 rounded" title="Sil"><Trash2 size={15} /></button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -202,16 +278,69 @@ export default function MaintenancePage() {
               <input {...regS('last_done_date')} type="date" className="input" />
             </div>
             <div>
-              <label className="label">Sonraki Bakım (KM)</label>
-              <input {...regS('next_due_km', { valueAsNumber: true })} type="number" className="input" />
+              <label className="label">Sonraki Bakım (KM) <span className="text-slate-400 font-normal text-xs">otomatik hesaplanır</span></label>
+              <input {...regS('next_due_km', { valueAsNumber: true })} type="number" className="input bg-blue-50 text-blue-800 font-semibold" placeholder="Aralık KM + Son KM" />
             </div>
             <div>
-              <label className="label">Sonraki Bakım (Tarih)</label>
-              <input {...regS('next_due_date')} type="date" className="input" />
+              <label className="label">Sonraki Bakım (Tarih) <span className="text-slate-400 font-normal text-xs">otomatik hesaplanır</span></label>
+              <input {...regS('next_due_date')} type="date" className="input bg-blue-50 text-blue-800 font-semibold" />
             </div>
           </div>
           <button type="submit" disabled={scheduleMutation.isPending} className="btn-primary w-full justify-center">
             {scheduleMutation.isPending ? 'Kaydediliyor...' : 'Plan Oluştur'}
+          </button>
+        </form>
+      </Modal>
+
+      {/* Plan Düzenle Modal */}
+      <Modal isOpen={editModal} onClose={() => setEditModal(false)} title="Bakım Planını Düzenle" size="lg">
+        <form onSubmit={handleE((data) => updateScheduleMutation.mutate({ id: editSchedule?.id, data }))} className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="label">Araç *</label>
+              <select {...regE('vehicle_id', { required: true, valueAsNumber: true })} className="input">
+                <option value="">Seçin</option>
+                {vehicles?.data?.map(v => <option key={v.id} value={v.id}>{v.plate_no} - {v.brand}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label">Bakım Tipi</label>
+              <select {...regE('maintenance_type_id', { valueAsNumber: true })} className="input">
+                <option value="">Seçin</option>
+                {types?.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="label">Özel İsim</label>
+              <input {...regE('custom_name')} className="input" placeholder="Bakım tipini seçmediyseniz" />
+            </div>
+            <div>
+              <label className="label">Aralık (KM)</label>
+              <input {...regE('interval_km', { valueAsNumber: true })} type="number" className="input" />
+            </div>
+            <div>
+              <label className="label">Aralık (Gün)</label>
+              <input {...regE('interval_days', { valueAsNumber: true })} type="number" className="input" />
+            </div>
+            <div>
+              <label className="label">Son Yapıldı (KM)</label>
+              <input {...regE('last_done_km', { valueAsNumber: true })} type="number" className="input" />
+            </div>
+            <div>
+              <label className="label">Son Yapıldı (Tarih)</label>
+              <input {...regE('last_done_date')} type="date" className="input" />
+            </div>
+            <div>
+              <label className="label">Sonraki Bakım (KM) <span className="text-slate-400 font-normal text-xs">otomatik hesaplanır</span></label>
+              <input {...regE('next_due_km', { valueAsNumber: true })} type="number" className="input bg-blue-50 text-blue-800 font-semibold" />
+            </div>
+            <div>
+              <label className="label">Sonraki Bakım (Tarih) <span className="text-slate-400 font-normal text-xs">otomatik hesaplanır</span></label>
+              <input {...regE('next_due_date')} type="date" className="input bg-blue-50 text-blue-800 font-semibold" />
+            </div>
+          </div>
+          <button type="submit" disabled={updateScheduleMutation.isPending} className="btn-primary w-full justify-center">
+            {updateScheduleMutation.isPending ? 'Kaydediliyor...' : 'Güncelle'}
           </button>
         </form>
       </Modal>

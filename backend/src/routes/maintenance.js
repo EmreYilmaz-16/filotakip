@@ -88,6 +88,50 @@ router.post('/schedules',
   }
 );
 
+// PUT /api/maintenance/schedules/:id
+router.put('/schedules/:id',
+  authorize('admin', 'manager'),
+  async (req, res) => {
+    const { vehicle_id, maintenance_type_id, custom_name, interval_km, interval_days,
+            last_done_km, last_done_date, next_due_km, next_due_date, notes } = req.body;
+    const toNull = (v) => (v === '' || v === undefined || v === null) ? null : v;
+    try {
+      const result = await db.query(`
+        UPDATE maintenance_schedules SET
+          vehicle_id=$1, maintenance_type_id=$2, custom_name=$3,
+          interval_km=$4, interval_days=$5, last_done_km=$6, last_done_date=$7,
+          next_due_km=$8, next_due_date=$9, notes=$10, updated_at=NOW()
+        WHERE id=$11 RETURNING *
+      `, [vehicle_id, toNull(maintenance_type_id), toNull(custom_name), toNull(interval_km), toNull(interval_days),
+          toNull(last_done_km), toNull(last_done_date), toNull(next_due_km), toNull(next_due_date),
+          toNull(notes), req.params.id]);
+      if (!result.rows.length) return res.status(404).json({ error: 'Plan bulunamadi.' });
+      res.json(result.rows[0]);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Sunucu hatasi.' });
+    }
+  }
+);
+
+// DELETE /api/maintenance/schedules/:id
+router.delete('/schedules/:id',
+  authorize('admin', 'manager'),
+  async (req, res) => {
+    try {
+      const result = await db.query(
+        'DELETE FROM maintenance_schedules WHERE id=$1 RETURNING id',
+        [req.params.id]
+      );
+      if (!result.rows.length) return res.status(404).json({ error: 'Plan bulunamadi.' });
+      res.json({ success: true });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Sunucu hatasi.' });
+    }
+  }
+);
+
 // GET /api/maintenance/records
 router.get('/records', async (req, res) => {
   try {

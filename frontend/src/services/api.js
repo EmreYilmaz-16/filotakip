@@ -62,6 +62,8 @@ export const createKmRecord = (data) => api.post('/km', data).then(r => r.data)
 // Bakım
 export const getMaintenanceSchedules = (params) => api.get('/maintenance/schedules', { params }).then(r => r.data)
 export const createMaintenanceSchedule = (data) => api.post('/maintenance/schedules', data).then(r => r.data)
+export const updateMaintenanceSchedule = (id, data) => api.put(`/maintenance/schedules/${id}`, data).then(r => r.data)
+export const deleteMaintenanceSchedule = (id) => api.delete(`/maintenance/schedules/${id}`).then(r => r.data)
 export const getMaintenanceRecords = (params) => api.get('/maintenance/records', { params }).then(r => r.data)
 export const createMaintenanceRecord = (data) => api.post('/maintenance/records', data).then(r => r.data)
 export const getMaintenanceTypes = () => api.get('/maintenance/types').then(r => r.data)
