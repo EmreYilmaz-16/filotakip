@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Fuel, Wrench, AlertTriangle, FileText, MapPin, Plus } from 'lucide-react'
+import { ArrowLeft, Fuel, Wrench, AlertTriangle, FileText, MapPin, Plus, Pencil, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { tr } from 'date-fns/locale'
 import toast from 'react-hot-toast'
 import {
   getVehicle, getFuelRecords, getMaintenanceRecords, getFaults,
-  getDocuments, getAssignments, createFuelRecord, createDocument,
+  getDocuments, getAssignments, createFuelRecord, createDocument, updateDocument, deleteDocument,
   createMaintenanceRecord, getMaintenanceTypes
 } from '../services/api'
 import { PageLoader, StatCard } from '../components/ui/Common'
@@ -142,8 +142,34 @@ export default function VehicleDetailPage() {
   const [fuelModal, setFuelModal] = useState(false)
   const [maintenanceModal, setMaintenanceModal] = useState(false)
   const [docModal, setDocModal] = useState(false)
+  const [editDocModal, setEditDocModal] = useState(false)
+  const [editDocData, setEditDocData] = useState(null)
   const qc = useQueryClient()
   const { register: regDoc, handleSubmit: handleDoc, reset: resetDoc } = useForm()
+  const { register: regEditDoc, handleSubmit: handleEditDocForm, reset: resetEditDoc } = useForm()
+
+  const openEditDoc = (doc) => {
+    setEditDocData(doc)
+    resetEditDoc({
+      document_name: doc.document_name,
+      document_type: doc.document_type,
+      issue_date: doc.issue_date ? doc.issue_date.split('T')[0] : '',
+      expiry_date: doc.expiry_date ? doc.expiry_date.split('T')[0] : '',
+      insurance_company: doc.insurance_company || '',
+      policy_no: doc.policy_no || '',
+      amount: doc.amount || '',
+      notes: doc.notes || '',
+    })
+    setEditDocModal(true)
+  }
+
+  const handleDeleteDoc = (docId) => {
+    if (window.confirm('Bu belgeyi silmek istediğinizden emin misiniz?')) {
+      deleteDocument(docId)
+        .then(() => { toast.success('Belge silindi.'); qc.invalidateQueries({ queryKey: ['documents', id] }) })
+        .catch((err) => toast.error(err.response?.data?.error || 'Hata oluştu.'))
+    }
+  }
 
   const { data: vehicle, isLoading } = useQuery({ queryKey: ['vehicle', id], queryFn: () => getVehicle(id) })
   const { data: fuelRecords } = useQuery({ queryKey: ['fuel', id], queryFn: () => getFuelRecords({ vehicle_id: id }) })
@@ -337,7 +363,7 @@ export default function VehicleDetailPage() {
           </div>
           <div className="table-container">
           <table className="table">
-            <thead><tr><th>Belge Adı</th><th>Tür</th><th>Düzenleme</th><th>Bitiş</th><th>Sigorta Şirketi</th></tr></thead>
+            <thead><tr><th>Belge Adı</th><th>Tür</th><th>Düzenleme</th><th>Bitiş</th><th>Sigorta Şirketi</th><th></th></tr></thead>
             <tbody>
               {!documents?.length ? (
                 <tr><td colSpan={5}><div className="py-8 text-center text-slate-400 text-sm">Belge bulunamadı</div></td></tr>
@@ -356,12 +382,69 @@ export default function VehicleDetailPage() {
                         </span>
                       ) : '—'}
                     </td>
-                    <td>{d.insurance_company || '—'}</td>
-                  </tr>
+                    <td>{d.insurance_company || '—'}</td>                    <td>
+                      <div className="flex gap-1">
+                        <button onClick={() => openEditDoc(d)} className="p-1 text-blue-600 hover:text-blue-800 rounded" title="Düzenle"><Pencil size={15} /></button>
+                        <button onClick={() => handleDeleteDoc(d.id)} className="p-1 text-red-500 hover:text-red-700 rounded" title="Sil"><Trash2 size={15} /></button>
+                      </div>
+                    </td>                  </tr>
                 )
               })}
             </tbody>
           </table>          </div>
+          <Modal isOpen={editDocModal} onClose={() => { setEditDocModal(false); resetEditDoc() }} title="Belge Düzenle" size="lg">
+            <form onSubmit={handleEditDocForm((data) => {
+              const n = (v) => (v === '' || v === undefined) ? null : v
+              updateDocument(editDocData.id, { ...data, issue_date: n(data.issue_date), expiry_date: n(data.expiry_date), insurance_company: n(data.insurance_company), policy_no: n(data.policy_no), amount: n(data.amount) })
+                .then(() => { toast.success('Belge güncellendi.'); setEditDocModal(false); resetEditDoc(); qc.invalidateQueries({ queryKey: ['documents', id] }) })
+                .catch((err) => toast.error(err.response?.data?.error || 'Hata oluştu.'))
+            })} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="label">Belge Adı *</label>
+                  <input {...regEditDoc('document_name', { required: true })} className="input" />
+                </div>
+                <div>
+                  <label className="label">Belge Türü *</label>
+                  <select {...regEditDoc('document_type', { required: true })} className="input">
+                    <option value="">Seçin</option>
+                    <option value="insurance">Sigorta / Kasko</option>
+                    <option value="inspection">Muayene</option>
+                    <option value="registration">Ruhsat</option>
+                    <option value="license">İzin Belgesi</option>
+                    <option value="emission">Emisyon</option>
+                    <option value="other">Diğer</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Düzenleme Tarihi</label>
+                  <input {...regEditDoc('issue_date')} type="date" className="input" />
+                </div>
+                <div>
+                  <label className="label">Bitiş Tarihi</label>
+                  <input {...regEditDoc('expiry_date')} type="date" className="input" />
+                </div>
+                <div>
+                  <label className="label">Sigorta Şirketi</label>
+                  <input {...regEditDoc('insurance_company')} className="input" />
+                </div>
+                <div>
+                  <label className="label">Poliçe / Belge No</label>
+                  <input {...regEditDoc('policy_no')} className="input" />
+                </div>
+                <div>
+                  <label className="label">Tutar (₺)</label>
+                  <input {...regEditDoc('amount', { valueAsNumber: true })} type="number" step="0.01" className="input" />
+                </div>
+                <div>
+                  <label className="label">Notlar</label>
+                  <input {...regEditDoc('notes')} className="input" />
+                </div>
+              </div>
+              <button type="submit" className="btn-primary w-full justify-center">Güncelle</button>
+            </form>
+          </Modal>
+
           <Modal isOpen={docModal} onClose={() => { setDocModal(false); resetDoc() }} title="Araç Belgesi Ekle" size="lg">
             <form onSubmit={handleDoc((data) => {
               const n = (v) => (v === '' || v === undefined) ? null : v
