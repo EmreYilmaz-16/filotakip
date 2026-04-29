@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, Truck, Users, ClipboardList,
-  Fuel, Wrench, AlertTriangle, BarChart3, UserCog, X, MapPin, FileText, Receipt, ShieldAlert
+  Fuel, Wrench, AlertTriangle, BarChart3, UserCog, X, MapPin, FileText, Receipt, ShieldAlert, Circle
 } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore'
 
@@ -15,6 +15,7 @@ const navItems = [
   { to: '/maintenance', icon: Wrench, label: 'Bakım Takibi' },
   { to: '/faults', icon: AlertTriangle, label: 'Arıza Takibi' },
   { to: '/accidents', icon: ShieldAlert, label: 'Kaza Kayıtları' },
+  { to: '/tires', icon: Circle, label: 'Lastik Yönetimi' },
   { to: '/driver-docs', icon: FileText, label: 'Sürücü Belgeleri' },
   { to: '/taxes', icon: Receipt, label: 'Vergi Takibi' },
   { to: '/reports', icon: BarChart3, label: 'Raporlar' },

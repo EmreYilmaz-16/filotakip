@@ -47,6 +47,47 @@ async function runMigrations() {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
+    // Tire management tables
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS tires (
+        id SERIAL PRIMARY KEY,
+        vehicle_id INTEGER REFERENCES vehicles(id) ON DELETE SET NULL,
+        serial_no VARCHAR(100),
+        brand VARCHAR(100) NOT NULL,
+        model VARCHAR(100),
+        size VARCHAR(50),
+        type VARCHAR(20) DEFAULT 'all_season' CHECK (type IN ('summer','winter','all_season')),
+        position VARCHAR(20) DEFAULT 'storage' CHECK (position IN ('front_left','front_right','rear_left','rear_right','spare','storage')),
+        status VARCHAR(20) DEFAULT 'storage' CHECK (status IN ('active','storage','scrapped')),
+        purchase_date DATE,
+        purchase_price NUMERIC(10,2),
+        installed_date DATE,
+        installed_km INTEGER,
+        current_km INTEGER,
+        tread_depth NUMERIC(4,1),
+        pressure NUMERIC(5,1),
+        notes TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS tire_history (
+        id SERIAL PRIMARY KEY,
+        tire_id INTEGER NOT NULL REFERENCES tires(id) ON DELETE CASCADE,
+        vehicle_id INTEGER REFERENCES vehicles(id) ON DELETE SET NULL,
+        action VARCHAR(30) NOT NULL CHECK (action IN ('installed','removed','rotated','inspected','repaired','scrapped')),
+        from_position VARCHAR(20),
+        to_position VARCHAR(20),
+        action_date DATE NOT NULL,
+        km_at_action INTEGER,
+        tread_depth NUMERIC(4,1),
+        pressure NUMERIC(5,1),
+        notes TEXT,
+        performed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
     console.log('Migrations tamamlandi.');
   } catch (err) {
     console.error('Migration hatasi:', err.message);

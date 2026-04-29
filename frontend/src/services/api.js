@@ -126,4 +126,13 @@ export const createAccident = (data) => api.post('/accidents', data).then(r => r
 export const updateAccident = (id, data) => api.put(`/accidents/${id}`, data).then(r => r.data)
 export const deleteAccident = (id) => api.delete(`/accidents/${id}`).then(r => r.data)
 
+// Tires
+export const getTires = (params) => api.get('/tires', { params }).then(r => r.data)
+export const getTireStats = () => api.get('/tires/stats').then(r => r.data)
+export const getTire = (id) => api.get(`/tires/${id}`).then(r => r.data)
+export const createTire = (data) => api.post('/tires', data).then(r => r.data)
+export const updateTire = (id, data) => api.put(`/tires/${id}`, data).then(r => r.data)
+export const deleteTire = (id) => api.delete(`/tires/${id}`).then(r => r.data)
+export const addTireHistory = (id, data) => api.post(`/tires/${id}/history`, data).then(r => r.data)
+
 export default api
