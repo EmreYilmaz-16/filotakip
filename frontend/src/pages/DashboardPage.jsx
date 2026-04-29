@@ -15,7 +15,8 @@ export default function DashboardPage() {
   })
   const { data: overdueSchedules } = useQuery({
     queryKey: ['maintenance-schedules-overdue'],
-    queryFn: () => getMaintenanceSchedules({ overdue: 'true' }),
+    queryFn: () => getMaintenanceSchedules(),
+    select: (data) => data?.filter(s => s.is_overdue || s.is_upcoming),
   })
   const { data: expiringDocs } = useQuery({
     queryKey: ['expiring-docs'],

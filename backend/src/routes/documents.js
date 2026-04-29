@@ -13,20 +13,6 @@ const validate = (req, res, next) => {
   next();
 };
 
-// GET /api/documents/:vehicle_id
-router.get('/:vehicle_id', async (req, res) => {
-  try {
-    const result = await db.query(
-      'SELECT * FROM vehicle_documents WHERE vehicle_id=$1 ORDER BY expiry_date ASC NULLS LAST',
-      [req.params.vehicle_id]
-    );
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Sunucu hatasi.' });
-  }
-});
-
 // GET /api/documents/expiring/soon - Yakında bitecek belgeler
 router.get('/expiring/soon', async (req, res) => {
   try {
@@ -40,6 +26,20 @@ router.get('/expiring/soon', async (req, res) => {
         AND d.expiry_date >= CURRENT_DATE - INTERVAL '30 days'
       ORDER BY d.expiry_date ASC
     `, [parseInt(days, 10)]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Sunucu hatasi.' });
+  }
+});
+
+// GET /api/documents/:vehicle_id
+router.get('/:vehicle_id', async (req, res) => {
+  try {
+    const result = await db.query(
+      'SELECT * FROM vehicle_documents WHERE vehicle_id=$1 ORDER BY expiry_date ASC NULLS LAST',
+      [req.params.vehicle_id]
+    );
     res.json(result.rows);
   } catch (err) {
     console.error(err);
