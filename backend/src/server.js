@@ -47,6 +47,23 @@ async function runMigrations() {
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )
     `);
+    // Vehicle inspection forms
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS vehicle_inspections (
+        id SERIAL PRIMARY KEY,
+        vehicle_id INTEGER NOT NULL REFERENCES vehicles(id) ON DELETE CASCADE,
+        driver_id INTEGER REFERENCES drivers(id) ON DELETE SET NULL,
+        reported_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        inspection_type VARCHAR(20) DEFAULT 'departure' CHECK (inspection_type IN ('departure','return','periodic')),
+        inspection_date DATE NOT NULL,
+        km INTEGER,
+        overall_status VARCHAR(10) DEFAULT 'pass' CHECK (overall_status IN ('pass','fail','warning')),
+        items JSONB DEFAULT '[]',
+        notes TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `);
     // Tire management tables
     await db.query(`
       CREATE TABLE IF NOT EXISTS tires (

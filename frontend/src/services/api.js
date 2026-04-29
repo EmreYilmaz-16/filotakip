@@ -135,4 +135,12 @@ export const updateTire = (id, data) => api.put(`/tires/${id}`, data).then(r => 
 export const deleteTire = (id) => api.delete(`/tires/${id}`).then(r => r.data)
 export const addTireHistory = (id, data) => api.post(`/tires/${id}/history`, data).then(r => r.data)
 
+// Inspections
+export const getInspections = (params) => api.get('/inspections', { params }).then(r => r.data)
+export const getInspectionStats = () => api.get('/inspections/stats').then(r => r.data)
+export const getInspection = (id) => api.get(`/inspections/${id}`).then(r => r.data)
+export const createInspection = (data) => api.post('/inspections', data).then(r => r.data)
+export const updateInspection = (id, data) => api.put(`/inspections/${id}`, data).then(r => r.data)
+export const deleteInspection = (id) => api.delete(`/inspections/${id}`).then(r => r.data)
+
 export default api

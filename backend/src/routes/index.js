@@ -17,6 +17,7 @@ const driverDocRoutes = require('./driver-documents');
 const vehicleTaxRoutes = require('./vehicle-taxes');
 const accidentRoutes = require('./accidents');
 const tireRoutes = require('./tires');
+const inspectionRoutes = require('./inspections');
 
 router.use('/auth', authRoutes);
 router.use('/vehicles', vehicleRoutes);
@@ -34,5 +35,6 @@ router.use('/driver-documents', driverDocRoutes);
 router.use('/vehicle-taxes', vehicleTaxRoutes);
 router.use('/accidents', accidentRoutes);
 router.use('/tires', tireRoutes);
+router.use('/inspections', inspectionRoutes);
 
 module.exports = router;
