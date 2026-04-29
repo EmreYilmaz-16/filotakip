@@ -8,9 +8,9 @@ const MONTHS = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl',
 
 function buildMonthlyData(fuelData, maintData) {
   return MONTHS.map((name, i) => {
-    const m = String(i + 1).padStart(2, '0')
-    const fuel = fuelData?.find(r => r.month === m)
-    const maint = maintData?.find(r => r.month === m)
+    const monthNum = i + 1
+    const fuel = fuelData?.find(r => parseInt(r.month) === monthNum)
+    const maint = maintData?.find(r => parseInt(r.month) === monthNum)
     return {
       name,
       'Yakıt': parseFloat(fuel?.total_cost || 0).toFixed(0),
@@ -25,19 +25,19 @@ export default function ReportsPage() {
 
   const { data: fuelData, isLoading: l1 } = useQuery({
     queryKey: ['fuel-monthly', year],
-    queryFn: () => getFuelMonthly(year),
+    queryFn: () => getFuelMonthly({ year }),
   })
   const { data: maintData, isLoading: l2 } = useQuery({
     queryKey: ['maint-cost', year],
-    queryFn: () => getMaintenanceCost(year),
+    queryFn: () => getMaintenanceCost({ year }),
   })
   const { data: vehicleCosts, isLoading: l3 } = useQuery({
     queryKey: ['vehicle-costs', year],
-    queryFn: () => getVehicleCosts(year),
+    queryFn: () => getVehicleCosts({ year }),
   })
   const { data: kmData, isLoading: l4 } = useQuery({
     queryKey: ['km-monthly', year],
-    queryFn: () => getKmMonthly(year),
+    queryFn: () => getKmMonthly({ year }),
   })
 
   const isLoading = l1 || l2 || l3 || l4
@@ -45,9 +45,9 @@ export default function ReportsPage() {
   const monthlyData = buildMonthlyData(fuelData, maintData)
 
   const kmMonthlyData = MONTHS.map((name, i) => {
-    const m = String(i + 1).padStart(2, '0')
-    const km = kmData?.find(r => r.month === m)
-    return { name, 'KM': parseInt(km?.total_km || 0) }
+    const monthNum = i + 1
+    const km = kmData?.find(r => parseInt(r.month) === monthNum)
+    return { name, 'KM': parseInt(km?.km_driven || 0) }
   })
 
   const vehicleChartData = vehicleCosts?.slice(0, 15).map(v => ({
